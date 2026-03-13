@@ -1,5 +1,7 @@
+
+import joi from 'joi'
 import { badRequestException } from "../Common/response/errorResponse.js";
-import { signupSchema } from "../modules/auth/auth.validation.js";
+import { GenderEnums } from './../Common/Enums/user.enums.js';
 
 export function validation(schema) {
   return (req, res, next) => {
@@ -8,6 +10,8 @@ export function validation(schema) {
       const validateResult = schema[schemaKey].validate(req[schemaKey], {
       abortEarly: false,
     });
+      req["validated"+schemaKey]=validateResult.value
+
        if (validateResult.error?.details.length > 0) {
       return validationErrors.push(validateResult.error);
     }
@@ -21,4 +25,14 @@ export function validation(schema) {
     next()
   };
   
+}
+
+export const commonFieldValidation={
+  username:joi.string().length(4).trim(),
+          email:joi.string().email().trim(),
+          gender:joi.string().valid(...Object.values(GenderEnums)).insensitive().trim(),
+          age:joi.number().min(12).max(100).positive(),
+          colors:joi.array().items(joi.string().trim()),
+          DOB:joi.date(),
+          password:joi.string().min(1)
 }

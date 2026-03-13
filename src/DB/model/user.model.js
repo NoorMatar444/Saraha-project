@@ -36,7 +36,8 @@ const userSchema = new Schema({
         enum: Object.values(providerEnums),
         default: providerEnums.SYSTEM
     },
-    profilePic:String
+    profilePic:String,
+    coverPics:[String],
 },
  { timestamps: true }
 );
