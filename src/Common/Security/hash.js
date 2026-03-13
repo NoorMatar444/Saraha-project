@@ -10,3 +10,4 @@ export async function hashValue({plainText,rounds=SALT_ROUNDS}){
 export async function compareHash({plainText,hashedValue}){
     return await compare(plainText,hashedValue)
 }
+

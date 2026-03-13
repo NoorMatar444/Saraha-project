@@ -18,7 +18,11 @@ import CryptoJS from "crypto-js";
 import jwt from "jsonwebtoken";
 import { providerEnums, RoleEnums } from "../../Common/Enums/user.enums.js";
 import { TokenType } from "./../../Common/Enums/token.enums.js";
-import { generateAccessAndRefreshToken, generateToken, getSignature } from "../../Common/Security/token.js";
+import {
+  generateAccessAndRefreshToken,
+  generateToken,
+  getSignature,
+} from "../../Common/Security/token.js";
 import { OAuth2Client } from "google-auth-library";
 // Encrypt
 
@@ -33,11 +37,13 @@ export async function signup(body) {
     rounds: SALT_ROUNDS,
   });
   body.password = hashedPassword;
-  const phoneEncrypted = CryptoJS.AES.encrypt(
-    body.phone,
-    ENCRYPTION_KEY,
-  ).toString();
-  body.phone = phoneEncrypted;
+  if (body.phone) {
+    const phoneEncrypted = CryptoJS.AES.encrypt(
+      body.phone,
+      ENCRYPTION_KEY,
+    ).toString();
+    body.phone = phoneEncrypted;
+  }
   const user = await create({ model: User, insertedData: body });
   return user;
 }
@@ -97,7 +103,6 @@ export async function signupWithGoogle(body) {
     },
   });
 
-  
   return { status: 201, result: generateAccessAndRefreshToken(newUser) };
 }
 export async function loginWithGoogle(body) {
@@ -119,6 +124,3 @@ export async function loginWithGoogle(body) {
 
   return generateAccessAndRefreshToken(user);
 }
-
-
-
