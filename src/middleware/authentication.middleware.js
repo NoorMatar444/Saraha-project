@@ -1,9 +1,11 @@
+import { unAuthorizedException } from "../Common/response/errorResponse.js";
 import {
   decodeToken,
   getSignature,
   verifyToken,
 } from "../Common/Security/token.js";
-import { findById } from "../DB/model/db.repository.js";
+import { findById, findOne } from "../DB/model/db.repository.js";
+import tokenModel from "../DB/model/token.model.js";
 import User from "../DB/model/user.model.js";
 import { TokenType } from "./../Common/Enums/token.enums.js";
 
@@ -29,11 +31,24 @@ export function authentication(tokenTypepram = TokenType.access) {
         tokenTypepram === TokenType.access ? signature : refreshSignature,
     });
 
+    const tokenExist = await findOne({
+      model: tokenModel,
+      filter: { jti: verifiedToken.jti },
+    });
+
+    if (tokenExist) {
+      return unAuthorizedException("Login again");
+    }
+
     const user = await findById({ model: User, id: verifiedToken.id });
     if (!user) {
       return unAuthorizedException("User not found signup again");
     }
+    if(verifiedToken.iat < user.changeCreditTime){
+      return unAuthorizedException("Login again");
+    }
     req.user = user;
+    req.tokenPayload = verifiedToken;
     next();
   };
 }

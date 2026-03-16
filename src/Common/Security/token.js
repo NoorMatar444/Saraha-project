@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { TokenType } from "../Enums/token.enums.js";
 import { RoleEnums } from "../Enums/user.enums.js";
 import { TOKEN_SIGNATURE_ADMIN, TOKEN_SIGNATURE_ADMIN_REFRESH, TOKEN_SIGNATURE_USER, TOKEN_SIGNATURE_USER_REFRESH } from './../../../config/config.service.js';
@@ -32,13 +33,14 @@ export function decodeToken(token){
 
 export function generateAccessAndRefreshToken(user){
   const { signature, refreshSignature } = getSignature(user.role);
-  
+  const tokenId= randomUUID()
     const accessToken = generateToken({
       payload: { id: user._id, role: user.role },
       signature,
       options: {
         audience: [user.role, TokenType.access],
         expiresIn: "1d",
+        jwtid: tokenId
       },
     });
     const refreshToken = generateToken({
@@ -47,6 +49,7 @@ export function generateAccessAndRefreshToken(user){
       options: {
         audience: [user.role, TokenType.refresh],
         expiresIn: "1y",
+        jwtid: tokenId
       },
     });
     return { accessToken, refreshToken };

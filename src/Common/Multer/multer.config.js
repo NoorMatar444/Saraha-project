@@ -7,7 +7,7 @@ import path from "path";
 // export default upload;
 
 export const allowFileFormat = {
-  img: ["image/png", "image/jpg", "image/jpeg"],
+  img: ["image/png", "image/jpeg", "image/jpg", "image/webp"],
   video: ["video/mp4"],
   pdf: ["application/pdf"],
 };
@@ -32,12 +32,16 @@ export function localUpload({
   });
 
   function fileFilter(req, file, cb) {
-    if (!allowedFormat.includes(file.mimetype)) {
+    const allowed = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    if (!allowed.includes(file.mimetype)) {
       return cb(new Error("Invalid format"), false);
     }
-
-    return cb(null, true);
+    cb(null, true);
   }
 
-  return multer({ storage: storage, fileFilter: fileFilter, limits:{fileSize:10*1024*1024} });
+  return multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 10 * 1024 * 1024 },
+  });
 }

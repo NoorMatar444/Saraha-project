@@ -13,6 +13,7 @@ export const profilePicSchema = {
       path: joi.string().required(),
       size: joi.number().required(),
     })
+    .unknown(true)   
     .required(),
 };
 

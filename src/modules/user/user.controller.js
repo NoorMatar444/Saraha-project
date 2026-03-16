@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { coverProfilePic, renewToken, uploadProfilePic } from "./user.service.js";
+import { coverProfilePic, Logout, renewToken, uploadProfilePic } from "./user.service.js";
 import { successResponse } from "./../../Common/response/successResponse.js";
 import { authentication } from "./../../middleware/authentication.middleware.js";
 import { TokenType } from "../../Common/Enums/token.enums.js";
@@ -58,5 +58,11 @@ userRouter.post(
 userRouter.get("/share-profile/:profileId", validation(getAnotherUserProfileSchema), async (req, res) => {
   const result = await getAnotherProfile(req.params.profileId);
     return successResponse(res, 201, result);
+})
+
+
+userRouter.post("/Logout",authentication(), async(req,res)=>{
+  const result= await Logout(req.user._id,req.tokenPayload, req.body.logoutOptions);
+  return successResponse(res, 201, result);
 })
 export default userRouter;

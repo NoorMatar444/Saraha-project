@@ -38,6 +38,7 @@ const userSchema = new Schema({
     },
     profilePic:String,
     coverPics:[String],
+    changeCreditTime:Date,
 },
  { timestamps: true }
 );

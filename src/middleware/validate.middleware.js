@@ -6,19 +6,22 @@ import { Types } from "mongoose";
 export function validation(schema) {
   return (req, res, next) => {
     const validationErrors = [];
-    for (const schemaKey of Object.keys(schema)) {
-      const validateResult = schema[schemaKey].validate(req[schemaKey], {
-        abortEarly: false,
-      });
-      req["validated" + schemaKey] = validateResult.value;
 
-      if (validateResult.error?.details.length > 0) {
-        validationErrors.push(validateResult.error);
-      }
+    for (const key of Object.keys(schema)) {
+      const result = schema[key].validate(req[key], { abortEarly: false });
+      req["validated" + key] = result.value;
+      if (result.error) validationErrors.push(result.error);
     }
 
     if (validationErrors.length > 0) {
-      return badRequestException("validation error", validationErrors);
+      const errors = validationErrors.flatMap((err) =>
+        err.details.map((d) => ({ message: d.message, path: d.path })),
+      );
+      return res.status(400).json({
+        success: false,
+        message: "validation error",
+        errors,
+      });
     }
 
     next();
@@ -37,10 +40,10 @@ export const commonFieldValidation = {
   colors: joi.array().items(joi.string().trim()),
   DOB: joi.date(),
   password: joi.string().min(1),
-}
+};
 
-export function validateObjectIdFn(value,helpers){
-  if(!Types.ObjectId.isValid(value)){
-    return helpers.message("Invalid object id")
+export function validateObjectIdFn(value, helpers) {
+  if (!Types.ObjectId.isValid(value)) {
+    return helpers.message("Invalid object id");
   }
 }
