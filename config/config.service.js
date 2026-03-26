@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { config } from 'dotenv';
+// import { REDIS_URL } from './config.service';
 
 // ✅ حمّل NODE_ENV يدوي لو مش موجود
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -27,3 +28,6 @@ export const TOKEN_SIGNATURE_ADMIN = process.env.TOKEN_SIGNATURE_ADMIN ?? "12345
 export const TOKEN_SIGNATURE_USER_REFRESH = process.env.TOKEN_SIGNATURE_USER_REFRESH ?? "abcdef-refresh";
 export const TOKEN_SIGNATURE_ADMIN_REFRESH = process.env.TOKEN_SIGNATURE_ADMIN_REFRESH ?? "123456-refresh";
 export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "10466139006-nh1nv4nsu0ctuorsm4f0q18peou3ce2f.apps.googleusercontent.com";
+export const REDIS_URL = process.env.REDIS_URL
+export const MAIL_USER = process.env.MAIL_USER
+export const MAIL_PASS = process.env.MAIL_PASS

@@ -2,6 +2,14 @@
 import joi from 'joi';
 import { badRequestException } from "../Common/response/errorResponse.js";
 import { GenderEnums } from './../Common/Enums/user.enums.js';
+import mongoose from "mongoose";
+
+export const validateObjectIdFn = (value, helper) => {
+  if (!mongoose.Types.ObjectId.isValid(value)) {
+    return helper.message("Invalid ObjectId");
+  }
+  return value;
+};
 
 export function validation(schema) {
   return (req, res, next) => {

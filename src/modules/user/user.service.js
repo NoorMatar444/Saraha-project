@@ -11,7 +11,7 @@ import {
   verifyToken,
 } from "../../Common/Security/token.js";
 import { decryptValue } from "../../Common/Security/encrypt.js";
-import tokenModel from "../../DB/model/token.model.js";
+import * as redisService from "../../DB/redis.service.js";
 
 export async function renewToken(userData) {
   const { signature } = getSignature(userData.role);
@@ -70,14 +70,11 @@ export async function Logout(userId, tokenData, logoutOption) {
       data: { changeCreditTime: Date.now() },
     });
   } else {
-    const token = await create({
-      model: tokenModel,
-      data: {
-        jti: tokenData.jti,
-        userId: userId,
-        expiredAt: new Date(tokenData.exp * 1000),
-      },
-    });
+    await redisService.set({
+    key: redisService.getBlackListTokenKey({userId,tokenId:tokenData.jti}),
+    value:tokenData.jti,
+    exValue:60*60*24*365 -(Date.now() - tokenData.iat * 1000)/1000
+  })
   }
 
   return token;

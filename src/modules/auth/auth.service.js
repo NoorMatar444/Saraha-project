@@ -1,10 +1,6 @@
 import {
   ENCRYPTION_KEY,
   SALT_ROUNDS,
-  TOKEN_SIGNATURE_ADMIN,
-  TOKEN_SIGNATURE_USER,
-  TOKEN_SIGNATURE_ADMIN_REFRESH,
-  TOKEN_SIGNATURE_USER_REFRESH,
   GOOGLE_CLIENT_ID,
 } from "../../../config/config.service.js";
 import {
@@ -15,15 +11,16 @@ import { create, findOne } from "../../DB/model/db.repository.js";
 import User from "../../DB/model/user.model.js";
 import { compareHash, hashValue } from "../../Common/Security/hash.js";
 import CryptoJS from "crypto-js";
-import jwt from "jsonwebtoken";
-import { providerEnums, RoleEnums } from "../../Common/Enums/user.enums.js";
-import { TokenType } from "./../../Common/Enums/token.enums.js";
+import { providerEnums } from "../../Common/Enums/user.enums.js";
 import {
   generateAccessAndRefreshToken,
-  generateToken,
-  getSignature,
 } from "../../Common/Security/token.js";
 import { OAuth2Client } from "google-auth-library";
+import { generateOtp } from "../../Common/OTP/otp.service.js";
+import sendMail from './../../Common/Email/email.config.js';
+import { EmailEnum } from "../../Common/Enums/email.enum.js";
+import * as RedisMethods from "../../DB/redis.service.js";
+
 // Encrypt
 
 // Decrypt
@@ -45,6 +42,18 @@ export async function signup(body) {
     body.phone = phoneEncrypted;
   }
   const user = await create({ model: User, insertedData: body });
+
+  const otp= generateOtp();
+  await sendMail({
+    to:email,
+    subject:EmailEnum.confirmEmail,
+    html:`<h1>Your confirmation code is ${otp}</h1>`,
+  });
+  await RedisMethods.set({
+    key: `otp::${email}::${EmailEnum.confirmEmail}`,
+    value:await hashValue({plainText:otp, rounds: SALT_ROUNDS}),
+    exValue:120,
+  })
   return user;
 }
 

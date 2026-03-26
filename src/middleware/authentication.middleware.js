@@ -5,7 +5,6 @@ import {
   verifyToken,
 } from "../Common/Security/token.js";
 import { findById, findOne } from "../DB/model/db.repository.js";
-import tokenModel from "../DB/model/token.model.js";
 import User from "../DB/model/user.model.js";
 import { TokenType } from "./../Common/Enums/token.enums.js";
 

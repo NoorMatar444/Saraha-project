@@ -7,7 +7,7 @@ export const signupSchema= {
     }),
     body:joi.object({}).keys({
         username:commonFieldValidation.username.required(),
-        email:commonFieldValidation.email.required(),
+        email:joi.string().trim().required(),
         gender:commonFieldValidation.gender,
         age:commonFieldValidation.age,
         colors:commonFieldValidation.colors,

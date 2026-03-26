@@ -62,7 +62,7 @@ userRouter.get("/share-profile/:profileId", validation(getAnotherUserProfileSche
 
 
 userRouter.post("/Logout",authentication(), async(req,res)=>{
-  const result= await Logout(req.user._id,req.tokenPayload, req.body.logoutOptions);
+  const result= await Logout(req.user._id,req.tokenPayload, req.body);
   return successResponse(res, 201, result);
 })
 export default userRouter;

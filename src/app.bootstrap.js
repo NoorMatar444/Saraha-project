@@ -6,11 +6,21 @@ import authRouter from './modules/auth/auth.controller.js'
 import { errorHandling } from './Common/response/errorResponse.js'
 import userRouter from './modules/user/user.controller.js'
 import cors from 'cors'
+import { testRedisConnection } from './DB/redis.connection.js'
+import sendMail from './Common/Email/email.config.js'
+
 
 async function bootstrap() {
     const app = express()
     //convert buffer data
     await testDbConnection()
+    await testRedisConnection()
+    // await sendMail({
+    //     to:"gorsdnmnsenzmucyds@nespf.com",
+    //     subject:"Testing email",
+    //     text:"This is a test email from Saraha project",
+    //     html:"<h1>This is a test email from Saraha project</h1>"
+    // })
     app.use(cors())
     app.use(express.json())
     //application routing

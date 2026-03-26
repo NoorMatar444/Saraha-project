@@ -4,7 +4,7 @@ import { compare, hash } from "bcrypt"
 
 export async function hashValue({plainText,rounds=SALT_ROUNDS}){
    
-    return await hash(plainText,rounds)
+    return await hash(String(plainText),rounds)
 }
 
 export async function compareHash({plainText,hashedValue}){
