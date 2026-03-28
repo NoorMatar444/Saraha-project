@@ -4,6 +4,7 @@ import {
   GOOGLE_CLIENT_ID,
 } from "../../../config/config.service.js";
 import {
+  badRequestException,
   conflictException,
   notFoundException,
 } from "../../Common/response/errorResponse.js";
@@ -132,4 +133,35 @@ export async function loginWithGoogle(body) {
   }
 
   return generateAccessAndRefreshToken(user);
+}
+
+export async function confirmEmail(body) {
+  const { email, OTP } = body;
+  const user= await findOne({
+    model:user,
+    filter:{email,confirmEmail:false}
+  });
+  if(!user) badRequestException("user not found or already confirmed")
+    const storedOtp= await RedisMethods.get(`otp::${email}::${EmailEnum.confirmEmail}`)
+    if(!storedOtp) badRequestException("OTP expired")
+      const isOtpValid= await compareHash({plainText:OTP, hashedValue:storedOtp})
+      if(!isOtpValid) badRequestException("Invalid OTP")
+      user.confirmEmail=true;
+      await user.save();
+}
+
+export async function resendConfirmEmailOtp(email){
+  const pervOtpttl= await RedisMethods.ttl(`otp::${email}::${EmailEnum.confirmEmail}`)
+  if(pervOtpttl>0) badRequestException(`you can request new OTP after ${pervOtpttl} seconds`)
+    const otp= generateOtp();
+    await sendMail({
+      to:email,
+      subject:EmailEnum.confirmEmail,
+      html:`<h1>Your confirmation code is ${otp}</h1>`,
+    });
+    await RedisMethods.set({
+      key: `otp::${email}::${EmailEnum.confirmEmail}`,
+      value:await hashValue({plainText:otp, rounds: SALT_ROUNDS}),
+      exValue:120,
+    })
 }

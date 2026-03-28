@@ -16,3 +16,15 @@ export const signupSchema= {
     })
 }
 
+export const confirmEmailSchema={
+    body:joi.object({}).keys({
+        email : commonFieldValidation.email.required(),
+        OTP : commonFieldValidation.OTP.required()
+    })
+}
+
+export const resendOtpConfirmEmailSchema={
+    body:joi.object({}).keys({
+        email : commonFieldValidation.email.required(),
+    })
+}

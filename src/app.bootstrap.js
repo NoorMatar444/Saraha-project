@@ -15,12 +15,7 @@ async function bootstrap() {
     //convert buffer data
     await testDbConnection()
     await testRedisConnection()
-    // await sendMail({
-    //     to:"gorsdnmnsenzmucyds@nespf.com",
-    //     subject:"Testing email",
-    //     text:"This is a test email from Saraha project",
-    //     html:"<h1>This is a test email from Saraha project</h1>"
-    // })
+ 
     app.use(cors())
     app.use(express.json())
     //application routing

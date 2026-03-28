@@ -51,5 +51,6 @@ export const commonFieldValidation = {
   age: joi.number().min(12).max(100).positive(),
   colors: joi.array().items(joi.string().trim()),
   DOB: joi.date(),
-  password: joi.string().min(1)
+  password: joi.string().min(1),
+  OTP: joi.string().pattern(/^\d{6}$/),
 };
