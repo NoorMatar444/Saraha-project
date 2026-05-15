@@ -7,7 +7,7 @@ import { authorization } from "../../middleware/authorization.middleware.js";
 import { RoleEnums } from "../../Common/Enums/user.enums.js";
 import { validation } from './../../middleware/validate.middleware.js';
 import { allowFileFormat, localUpload } from "../../Common/Multer/multer.config.js";
-import { coverPicSchema, getAnotherUserProfileSchema, profilePicSchema } from "./user.validation.js";
+import { coverPicSchema, getAnotherUserProfileSchema, profilePicSchema, updatePasswordSchema } from "./user.validation.js";
 
 
 const userRouter = Router();
@@ -55,6 +55,17 @@ userRouter.post(
   },
 );
 
+userRouter.post(
+  "/upload-Password",
+  authentication(),
+  validation(updatePasswordSchema),
+  async (req, res) => {
+    console.log(req.files);
+    const result = await updatePassword(req.body, req.user);
+    return successResponse(res, 201, result);
+  },
+);
+
 userRouter.get("/share-profile/:profileId", validation(getAnotherUserProfileSchema), async (req, res) => {
   const result = await getAnotherProfile(req.params.profileId);
     return successResponse(res, 201, result);
@@ -62,7 +73,7 @@ userRouter.get("/share-profile/:profileId", validation(getAnotherUserProfileSche
 
 
 userRouter.post("/Logout",authentication(), async(req,res)=>{
-  const result= await Logout(req.user._id,req.tokenPayload, req.body);
+  const result= await Logout(req.user._id,req.tokenPayload, req.body.logoutOption);
   return successResponse(res, 201, result);
 })
 export default userRouter;

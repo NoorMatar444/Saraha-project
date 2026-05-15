@@ -8,7 +8,7 @@ import { findById, findOne } from "../DB/model/db.repository.js";
 import User from "../DB/model/user.model.js";
 import { TokenType } from "./../Common/Enums/token.enums.js";
 
-export function authentication(tokenTypepram = TokenType.access) {
+export function authentication(tokenTypePram = TokenType.access) {
   return async (req, res, next) => {
     const { authorization } = req.headers;
     if (!authorization) {
@@ -19,7 +19,7 @@ export function authentication(tokenTypepram = TokenType.access) {
       : authorization;
     const decodedToken = decodeToken(token);
     const [userRole, tokenType] = decodedToken.aud;
-    if (tokenType !== tokenTypepram) {
+    if (tokenType !== tokenTypePram) {
       throw new Error("Invalid token type");
     }
     const { signature, refreshSignature } = getSignature(userRole);
@@ -27,7 +27,7 @@ export function authentication(tokenTypepram = TokenType.access) {
     const verifiedToken = verifyToken({
       token,
       signature:
-        tokenTypepram === TokenType.access ? signature : refreshSignature,
+        tokenTypePram === TokenType.access ? signature : refreshSignature,
     });
 
     const tokenExist = await findOne({

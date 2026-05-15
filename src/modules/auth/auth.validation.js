@@ -28,3 +28,30 @@ export const resendOtpConfirmEmailSchema={
         email : commonFieldValidation.email.required(),
     })
 }
+
+export const sendOtpForgetPasswordSchema={
+     body:joi.object({}).keys({
+        email : commonFieldValidation.email.required(),
+    })
+}
+
+export const verifyOtpForgetPasswordSchema={
+    body:joi.object({}).keys({
+        email : commonFieldValidation.email.required(),
+        OTP : commonFieldValidation.OTP.required()
+    })
+}
+
+export const resetPasswordSchema={
+    body:joi.object({}).keys({
+        email : commonFieldValidation.email.required(),
+        OTP : commonFieldValidation.OTP.required(),
+        Password: commonFieldValidation.password.required()
+    })
+}
+
+export const resendForgetPasswordOtpSchema={
+    body:joi.object({}).keys({
+        email : commonFieldValidation.email.required(),
+    })
+}

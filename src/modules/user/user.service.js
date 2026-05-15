@@ -1,17 +1,15 @@
 import { TokenType } from "../../Common/Enums/token.enums.js";
-import { RoleEnums } from "../../Common/Enums/user.enums.js";
-import { unAuthorizedException } from "../../Common/response/errorResponse.js";
 import { create, findById, updateOne } from "../../DB/model/db.repository.js";
 import User from "../../DB/model/user.model.js";
-import jwt from "jsonwebtoken";
+
 import {
-  decodeToken,
   generateToken,
   getSignature,
-  verifyToken,
 } from "../../Common/Security/token.js";
 import { decryptValue } from "../../Common/Security/encrypt.js";
 import * as redisService from "../../DB/redis.service.js";
+import { compareHash } from "../../Common/Security/hash.js";
+import User from './../../DB/model/user.model';
 
 export async function renewToken(userData) {
   const { signature } = getSignature(userData.role);
@@ -65,7 +63,7 @@ export async function getAnotherProfile(profileId) {
 export async function Logout(userId, tokenData, logoutOption) {
   if (logoutOption === "all") {
     await updateOne({
-      model: tokenModel,
+      model: User,
       filter: { _id: userId },
       data: { changeCreditTime: Date.now() },
     });
@@ -76,6 +74,29 @@ export async function Logout(userId, tokenData, logoutOption) {
     exValue:60*60*24*365 -(Date.now() - tokenData.iat * 1000)/1000
   })
   }
+}
 
-  return token;
+
+export async function updatePassword(body, userData) {
+  const { oldPassword, newPassword } = body
+  const { password } = userData
+
+  const isPasswordValid = await compareHash({
+    plainText: oldPassword,
+    hashedValue: password
+  })
+
+  if (!isPasswordValid) throw badRequestException("invalid old password")
+
+  await updateOne({
+    model: User,
+    filter: { _id: userData.id },
+    data: {
+      password: await hashValue({
+        plainText: newPassword,
+        rounds: SALT_ROUNDS
+      }),
+      changeCreditTime: Date.now()
+    }
+  })
 }

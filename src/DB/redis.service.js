@@ -5,6 +5,16 @@ export function getBlackListTokenKey({userId,tokenId}){
   return `blackListToken::${userId}::${tokenId}`
 }
 
+export async function getOtpKey({email,emailType}){
+  return `otp::${email}::${emailType}`
+}
+export async function getOtpBlockedKey({email,emailType}){
+  return `otp::${email}::${emailType}::Blocked`
+}
+
+export async function getOtpReqNoKey({email,emailType}){
+  return `otp::${email}::${emailType}::No`
+}
 
 export async function set({ key, value, exType = "EX", exValue = 60 }) {
   return await client.set(key, value, {
@@ -62,4 +72,12 @@ export async function mget(keys) {
 
 export async function exists(key) {
   return await client.exists(key);
+}
+
+export async function incr(key){
+  return await client.incr(key);
+}
+
+export async function decr(key){
+  return await client.decr(key);
 }

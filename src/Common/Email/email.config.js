@@ -16,7 +16,8 @@ async function sendMail({ to, subject, text, html, attachments }) {
     to,// list of recipients
     subject, // subject line
     text, // plain text body
-    html, // HTML body
+    html,// HTML body
+    attachments, 
   });
 
   console.log("Email sent: %s", info.messageId);

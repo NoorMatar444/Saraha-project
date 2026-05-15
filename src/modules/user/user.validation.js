@@ -1,5 +1,5 @@
 import joi from "joi";
-import { validateObjectIdFn } from "../../middleware/validate.middleware.js";
+import { commonFieldValidation, validateObjectIdFn } from "../../middleware/validate.middleware.js";
 
 export const profilePicSchema = {
   file: joi
@@ -41,4 +41,12 @@ export const getAnotherUserProfileSchema={
   params:joi.object().keys({
     profileId:joi.string().custom(validateObjectIdFn).required()
   }).required()
+}
+
+export const updatePasswordSchema={
+  body:joi.object().keys({
+    oldPassword:commonFieldValidation.password.required(),
+    newPassword:commonFieldValidation.password.required(),
+    confirmNewPassword:joi.string().valid(joi.ref('newPassword')).required()
+  })
 }

@@ -8,23 +8,58 @@ import {
   conflictException,
   notFoundException,
 } from "../../Common/response/errorResponse.js";
-import { create, findOne } from "../../DB/model/db.repository.js";
+import { create, findOne, updateOne } from "../../DB/model/db.repository.js";
 import User from "../../DB/model/user.model.js";
 import { compareHash, hashValue } from "../../Common/Security/hash.js";
 import CryptoJS from "crypto-js";
 import { providerEnums } from "../../Common/Enums/user.enums.js";
-import {
-  generateAccessAndRefreshToken,
-} from "../../Common/Security/token.js";
+import { generateAccessAndRefreshToken } from "../../Common/Security/token.js";
 import { OAuth2Client } from "google-auth-library";
 import { generateOtp } from "../../Common/OTP/otp.service.js";
-import sendMail from './../../Common/Email/email.config.js';
+import sendMail from "./../../Common/Email/email.config.js";
 import { EmailEnum } from "../../Common/Enums/email.enum.js";
 import * as RedisMethods from "../../DB/redis.service.js";
 
-// Encrypt
+async function sendEmailOtp({ email, emailType, subject }) {
+  const pervOtpTtl = await RedisMethods.ttl(
+    RedisMethods.getOtpKey({ email, emailType }),
+  );
+  if (pervOtpTtl > 0)
+    badRequestException(`you can request new OTP after ${pervOtpTtl} seconds`);
 
-// Decrypt
+  const isBlocked = await RedisMethods.exists(
+    RedisMethods.getOtpBlockedKey({ email, emailType }),
+  );
+  if (isBlocked)
+    badRequestException(
+      "you have requested OTP 5 times, please try again after 10 minutes",
+    );
+  const reqNo = await RedisMethods.get(
+    RedisMethods.getOtpReqNoKey({ email, emailType }),
+  );
+  if (reqNo == 5) {
+    await RedisMethods.set({
+      key: RedisMethods.getOtpBlockedKey({ email, emailType }),
+      value: 1,
+      exValue: 60 * 10,
+    });
+    return badRequestException(
+      "you have requested OTP 5 times, please try again after 20 minutes",
+    );
+  }
+  const otp = generateOtp();
+  await sendMail({
+    to: email,
+    subject,
+    html: `<h1>Your confirmation code is ${otp}</h1>`,
+  });
+  await RedisMethods.set({
+    key: RedisMethods.getOtpKey({ email, emailType }),
+    value: await hashValue({ plainText: otp, rounds: SALT_ROUNDS }),
+    exValue: 120,
+  });
+  await RedisMethods.incr(RedisMethods.getOtpReqNoKey({ email, emailType }));
+}
 
 export async function signup(body) {
   const { email } = body;
@@ -44,17 +79,12 @@ export async function signup(body) {
   }
   const user = await create({ model: User, insertedData: body });
 
-  const otp= generateOtp();
-  await sendMail({
-    to:email,
-    subject:EmailEnum.confirmEmail,
-    html:`<h1>Your confirmation code is ${otp}</h1>`,
+  await sendEmailOtp({
+    email,
+    emailType: EmailEnum.confirmEmail,
+    subject: "send Confirmation OTP",
   });
-  await RedisMethods.set({
-    key: `otp::${email}::${EmailEnum.confirmEmail}`,
-    value:await hashValue({plainText:otp, rounds: SALT_ROUNDS}),
-    exValue:120,
-  })
+
   return user;
 }
 
@@ -137,31 +167,82 @@ export async function loginWithGoogle(body) {
 
 export async function confirmEmail(body) {
   const { email, OTP } = body;
-  const user= await findOne({
-    model:user,
-    filter:{email,confirmEmail:false}
+  const user = await findOne({
+    model: User,
+    filter: { email, confirmEmail: false },
   });
-  if(!user) badRequestException("user not found or already confirmed")
-    const storedOtp= await RedisMethods.get(`otp::${email}::${EmailEnum.confirmEmail}`)
-    if(!storedOtp) badRequestException("OTP expired")
-      const isOtpValid= await compareHash({plainText:OTP, hashedValue:storedOtp})
-      if(!isOtpValid) badRequestException("Invalid OTP")
-      user.confirmEmail=true;
-      await user.save();
+  if (!user) badRequestException("user not found or already confirmed");
+  const key = RedisMethods.getOtpKey({
+    email,
+    emailType: EmailEnum.confirmEmail,
+  });
+
+  const storedOtp = await RedisMethods.get(key);
+  if (!storedOtp) badRequestException("OTP expired");
+  const isOtpValid = await compareHash({
+    plainText: OTP,
+    hashedValue: storedOtp,
+  });
+  if (!isOtpValid) badRequestException("Invalid OTP");
+  user.confirmEmail = true;
+  await user.save();
+  return user;
 }
 
-export async function resendConfirmEmailOtp(email){
-  const pervOtpttl= await RedisMethods.ttl(`otp::${email}::${EmailEnum.confirmEmail}`)
-  if(pervOtpttl>0) badRequestException(`you can request new OTP after ${pervOtpttl} seconds`)
-    const otp= generateOtp();
-    await sendMail({
-      to:email,
-      subject:EmailEnum.confirmEmail,
-      html:`<h1>Your confirmation code is ${otp}</h1>`,
-    });
-    await RedisMethods.set({
-      key: `otp::${email}::${EmailEnum.confirmEmail}`,
-      value:await hashValue({plainText:otp, rounds: SALT_ROUNDS}),
-      exValue:120,
+export async function resendForgetPasswordOtp(email) {
+  await sendEmailOtp({
+    email,
+    emailType: EmailEnum.forgetPassword,
+    subject: "Resend Forget Password OTP",
+  });
+}
+
+
+export async function resendConfirmEmailOtp(email) {
+  await sendEmailOtp({
+    email,
+    emailType: EmailEnum.confirmEmail,
+    subject: "Resend Confirmation OTP",
+  });
+}
+
+export async function sendOtpForgetPassword(email){
+  const user= await findOne({model:User,
+    filter:{email}
+  })
+  if(!user) notFoundException("user not found")
+    if(user.confirmEmail==false){
+      badRequestException("please confirm your email first")
+    }
+    await sendEmailOtp({
+      email,
+      emailType: EmailEnum.forgetPassword,
+      subject: "OTP to reset your password",
     })
+}
+
+export async function verifyOtpForgetPassword(body){
+  const { email, OTP } = body;
+  const emailOtp=await RedisMethods.get(RedisMethods.getOtpKey({
+    email,
+    emailType: EmailEnum.forgetPassword,
+  }))
+  if (!emailOtp) badRequestException("OTP expired");
+  const isOtpValid=await compareHash({
+    plainText: OTP,
+    hashedValue: emailOtp,
+  })
+  if(!isOtpValid) badRequestException("Invalid OTP")
+    
+}
+
+
+export async function resetPassword(body){
+  const { email, OTP, Password } = body;
+  await verifyOtpForgetPassword({email, OTP})
+  await updateOne({
+    model:User,
+    filter:{email},
+    data:{password: await hashValue({plainText: Password, rounds: SALT_ROUNDS})}
+  })
 }

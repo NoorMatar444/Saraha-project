@@ -5,13 +5,13 @@ import { config } from 'dotenv';
 // ✅ حمّل NODE_ENV يدوي لو مش موجود
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// خريطة الملفات
+// // خريطة الملفات
 const envPath = {
     development: '.env.development',
     production: '.env.production',
 };
 
-// ✅ شغّل dotenv بعد ما تحدد البيئة
+
 config({
     path: resolve(`./config/${envPath[NODE_ENV]}`)
 });

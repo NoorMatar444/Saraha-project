@@ -1,6 +1,5 @@
 // src/middleware/validate.middleware.js
 import joi from 'joi';
-import { badRequestException } from "../Common/response/errorResponse.js";
 import { GenderEnums } from './../Common/Enums/user.enums.js';
 import mongoose from "mongoose";
 
@@ -16,7 +15,7 @@ export function validation(schema) {
     const validationErrors = [];
 
     for (const schemaKey of Object.keys(schema)) {
-      const validateResult = schema[schemaKey].validate(req[schemaKey], { abortEarly: false });
+      const validateResult = schema[schemaKey].validate(req[schemaKey], { abortEarly: true });
       req["validated" + schemaKey] = validateResult.value;
 
       if (validateResult.error?.details?.length > 0) {
@@ -53,4 +52,5 @@ export const commonFieldValidation = {
   DOB: joi.date(),
   password: joi.string().min(1),
   OTP: joi.string().pattern(/^\d{6}$/),
+  id:joi.string().custom(validateObjectIdFn),
 };

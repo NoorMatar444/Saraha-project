@@ -20,6 +20,8 @@ export function getSignature(role = RoleEnums.USER) {
     return { signature, refreshSignature };
 }
 
+
+
 export function generateToken({payload={}, signature, options={}}){
   return jwt.sign(payload, signature, options)
 }
